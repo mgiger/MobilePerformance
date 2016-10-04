@@ -23,7 +23,7 @@
 			var uiBlocks = new DatasetBlockView(dataset.genericStats);
 			chart.addDatasetView(uiBlocks);
 			
-			var netBlocks = new DatasetBlockView(dataset.networkStats);
+			var netBlocks = new DatasetBlockView(dataset.networkStats, { labels:false, blockHeight:10, blockTop:100, blockStagger:3 });
 			chart.addDatasetView(netBlocks);
 			
 			// frameRate

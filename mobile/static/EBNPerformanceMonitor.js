@@ -94,8 +94,11 @@ class EBNBlockArray
 		}	
 
 		// ID
-		ctx.fillStyle = "#000";
-		ctx.fillText(this.name, x0 + 20, ypos + 30);
+		if(chart.labels)
+		{
+			ctx.fillStyle = "#000";
+			ctx.fillText(this.name, x0 + 20, ypos + 30);
+		}
 	}
 }
 
@@ -432,6 +435,19 @@ class DatasetBlockView extends DatasetView
 		this.genericBlocks = genericBlocks;
 		this.xRange = this.genericBlocks.xRange;
 		this.yRange = new Point(0, 1);
+		
+		this.labels = true;
+		this.blockTop = 50;
+		this.blockHeight = 40;
+		this.blockStagger = 2;
+		
+		if(options != undefined)
+		{
+			if(options["labels"] != undefined)			this.labels = options["labels"];
+			if(options["blockTop"] != undefined)		this.blockTop = options["blockTop"];
+			if(options["blockHeight"] != undefined)		this.blockHeight = options["blockHeight"];
+			if(options["blockStagger"] != undefined)	this.blockStagger = options["blockStagger"];
+		}
 	}
 	
 	calculateRanges()
@@ -444,13 +460,16 @@ class DatasetBlockView extends DatasetView
 		
 		ctx.font = "16px serif";
 	
-		var blockHeight = 40;
-		var ypos = this.viewFrame.y + 10 + blockHeight;
+		var ypos = this.viewFrame.y + this.blockTop;
 		var blocks = this.genericBlocks.blockArrays;
 		for(var i=0;i<blocks.length;++i)
 		{
-			ypos += (i % 2 == 1) ? blockHeight : -blockHeight;
-			blocks[i].draw(ctx, this.chart, ypos, blockHeight);
+			if(i % this.blockStagger == 0)
+				ypos = this.viewFrame.y + this.blockTop;
+			else
+				ypos += this.blockHeight;
+				
+			blocks[i].draw(ctx, this.chart, ypos, this.blockHeight);
 		}
 	}
 }
