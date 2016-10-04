@@ -76,6 +76,7 @@ class EBNBlockArray
 	draw(ctx, chart, ypos, yheight)
 	{
 		var x0 = 0;
+		var xN = 0;
 		for(var i=0;i<this.blocks.length;++i)
 		{
 			var coord0 = chart.dataToCoord(this.blocks[i].x, 0);
@@ -91,13 +92,19 @@ class EBNBlockArray
 
 			ctx.strokeStyle = "#000";
 			ctx.strokeRect(coord0.x, ypos, (coord1.x - coord0.x), yheight);
+			xN = coord1.x;
 		}	
 
 		// ID
-		if(chart.labels)
+		if(this.name)
 		{
-			ctx.fillStyle = "#000";
-			ctx.fillText(this.name, x0 + 20, ypos + 30);
+			var width = xN - x0;
+			var metrics = ctx.measureText(this.name);
+			if(metrics.width < width + 4)
+			{
+				ctx.fillStyle = "#000";
+				ctx.fillText(this.name, x0 + 4, ypos + yheight/2, width);	
+			}
 		}
 	}
 }
@@ -128,8 +135,8 @@ class EBNGenericStats
 				this.blockArrays.push(block);
 				
 				// calculate our range
-				if(this.xRange.x > evts[0])				this.xRange.x = evts[0];
-				if(this.xRange.y < evts[evts.length-1])	this.xRange.x = evts[evts.length-1];
+				if(this.xRange.x > block.xRange.x)	this.xRange.x = block.xRange.x;
+				if(this.xRange.y < block.xRange.y)	this.xRange.y = block.xRange.y;
 			}
 		}
 	}
@@ -145,11 +152,15 @@ class EBNNetworkStats
 		var lastLoadValue = 0;
 		
 		this.blockArrays = [];
-		
 		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		for(var i=0;i<networkData.length;++i)
 		{
 			var obj = networkData[i];
+			
+			// remove outliers
+			if(obj["comment"] == "trackEvent" || obj["comment"] == "EBNNotificationSubscriptionExpSvc")
+				continue;
+				
 			var req = obj["request"];
 			var res = obj["response"];
 			var timecount = Math.floor(obj["timestamp"]);
@@ -175,9 +186,9 @@ class EBNNetworkStats
 			
 			var btime = timecount;
 			var block = new EBNBlockArray(obj["comment"]);
-			block.addBlock(new Point(btime, btime + blocked), "#E82C0C");
+			block.addBlock(new Point(btime, btime + blocked), "#EEE");
 			btime += blocked;
-			block.addBlock(new Point(btime, btime + connect), "#E82C0C");
+			block.addBlock(new Point(btime, btime + connect), "#EEE");
 			btime += connect;
 			block.addBlock(new Point(btime, btime + send), "#9FE8AB");
 			btime += send;
@@ -189,12 +200,9 @@ class EBNNetworkStats
 			btime += processTime;
 			this.blockArrays.push(block);
 			
-			
-			this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
-
 			// calculate our range
-			if(this.xRange.x > timecount)	this.xRange.x = timecount;
-			if(this.xRange.y < btime)		this.xRange.x = btime;
+			if(this.xRange.x > block.xRange.x)	this.xRange.x = block.xRange.x;
+			if(this.xRange.y < block.xRange.y)	this.xRange.y = block.xRange.y;
 		}
 	}
 }
@@ -439,7 +447,7 @@ class DatasetBlockView extends DatasetView
 		this.labels = true;
 		this.blockTop = 20;
 		this.blockHeight = 40;
-		this.blockStagger = 2;
+		this.blockStagger = false;
 		
 		if(options != undefined)
 		{
@@ -460,24 +468,42 @@ class DatasetBlockView extends DatasetView
 		
 		ctx.font = "16px serif";
 	
-		var staggerCount = 0;
+		var startStagger = 0;
 		var ypos = this.viewFrame.y + this.blockTop;
 		var blocks = this.genericBlocks.blockArrays;
 		for(var i=0;i<blocks.length;++i)
 		{
-			if(i > 0)
+			if(this.blockStagger)
 			{
-				if(blocks[i-1].overlaps(blocks[i]))
+				if(i > 0)
 				{
-					++staggerCount;
-					ypos += this.blockHeight;
+					var overlap = false;
+					for(var j=startStagger;j<i;++j)
+					{
+						if(blocks[i].overlaps(blocks[j]))
+						{
+							overlap = true;
+							break;
+						}
+					}
+					if(overlap)
+					{
+						ypos += this.blockHeight;
+					}
+					else
+					{
+						// reset 
+						startStagger = i;
+						ypos = this.viewFrame.y + this.blockTop;
+					}
 				}
-				else
-				{
-					// reset 
-					staggerCount = 0;
+			}
+			else
+			{
+				if(i % 2 == 0)
 					ypos = this.viewFrame.y + this.blockTop;
-				}
+				else
+					ypos += this.blockHeight;
 			}
 				
 			blocks[i].draw(ctx, this.chart, ypos, this.blockHeight);

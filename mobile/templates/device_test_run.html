@@ -19,7 +19,7 @@
 				var uiBlocks = new DatasetBlockView(dset.genericStats);
 				chart.addDatasetView(uiBlocks);
 			
-				var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:10, blockTop:120, blockStagger:12 });
+				var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:16, blockTop:200, blockStagger:true });
 				chart.addDatasetView(netBlocks);
 			
 				// frameRate
@@ -53,5 +53,5 @@
 <p>Test run at {{ metrics.time|timezone:'America/Los_Angeles' }}</p>
 <p>Hardware: {{ hardware.modelName }} (iOS {{ hardware.systemVersion }}, {{ hardware.freeDiskSpace }} Free)</p>
 <hr/>
-<div id="chart" style="width:100%; height:500px"></div>
+<div id="chart" style="width:100%; height:800px"></div>
 {% endblock body %}
