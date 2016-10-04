@@ -23,6 +23,9 @@
 			var uiBlocks = new DatasetBlockView(dataset.genericStats);
 			chart.addDatasetView(uiBlocks);
 			
+			var netBlocks = new DatasetBlockView(dataset.networkStats);
+			chart.addDatasetView(netBlocks);
+			
 			// frameRate
 			var frameRate = new DatasetLineView(sysStats.timeMarks, sysStats.frameRate, { color:"red" });
 			chart.addDatasetView(frameRate);

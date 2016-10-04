@@ -48,38 +48,6 @@ class EBNSystemStats
 	}
 }
 
-class EBNNetworkStats
-{
-	constructor(networkData)
-	{
-		this.timeMarks = [];
-		this.networkData = [];
-		this.networkLoad = [];
-		var lastLoadValue = 0;
-		for(var i=0;i<networkData.length;++i)
-		{
-			var obj = networkData[i];
-			var req = obj["request"];
-			var res = obj["response"];
-			var timecount = Math.floor(obj["timestamp"]);
-			var data = {
-				"name":obj["comment"],
-				"time":obj["time"],
-				"timings":obj["timings"],
-				"requestBody":req["bodySize"],
-				"requestHeaders":req["headersSize"],
-				"responseBody":res["bodySize"],
-				"responseHeaders":res["headersSize"]
-			}
-			
-			this.timeMarks.push(timecount);
-			this.networkData.push(data);
-
-			lastLoadValue += (req["bodySize"]+req["headersSize"]+res["bodySize"]+res["headersSize"]) / (1024*1024);
-			this.networkLoad.push(lastLoadValue);
-		}
-	}
-}
 
 class EBNBlockArray
 {
@@ -139,10 +107,9 @@ class EBNGenericStats
 						"#B25350", "#3EB267", "#994117", "#8CFFB4", "#5B9ACC",
 						"#FCFFA5", "#A452CC", "#9AFFCD", "#B28F48", "#7F9926"];
 
-		this.blockArrays = [];
-		
 		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		
+		this.blockArrays = [];
 		for(var i=0;i<genericData.length;++i)
 		{
 			var obj = genericData[i];
@@ -150,20 +117,84 @@ class EBNGenericStats
 			
 			if(evts.length > 0)
 			{
-				this.xRange.x = evts[0];
-				this.xRange.y = evts[evts.length-1];
-				
 				var block = new EBNBlockArray(obj["id"]);
 				for(var j=1;j<evts.length;++j)
 				{
 					block.addBlock(new Point(evts[j-1], evts[j]), this.colors[j % this.colors.length]);
 				}
 				this.blockArrays.push(block);
+				
+				// calculate our range
+				if(this.xRange.x > evts[0])				this.xRange.x = evts[0];
+				if(this.xRange.y < evts[evts.length-1])	this.xRange.x = evts[evts.length-1];
 			}
 		}
 	}
 }
 
+class EBNNetworkStats
+{
+	constructor(networkData)
+	{
+		this.timeMarks = [];
+		this.networkData = [];
+		this.networkLoad = [];
+		var lastLoadValue = 0;
+		
+		this.blockArrays = [];
+		
+		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
+		for(var i=0;i<networkData.length;++i)
+		{
+			var obj = networkData[i];
+			var req = obj["request"];
+			var res = obj["response"];
+			var timecount = Math.floor(obj["timestamp"]);
+			var data = {
+				"name":obj["comment"],
+				"time":obj["time"],
+				"timings":obj["timings"],
+			}
+			
+			this.timeMarks.push(timecount);
+			this.networkData.push(data);
+
+			lastLoadValue += (req["bodySize"]+req["headersSize"]+res["bodySize"]+res["headersSize"]) / (1024*1024);
+			this.networkLoad.push(lastLoadValue);
+			
+			var timings = obj["timings"];
+			var blocked = timings["blocked"];
+			var connect = timings["connect"];
+			var send = timings["send"];
+			var wait = timings["wait"]
+			var receive = timings["receive"];
+			var processTime = timings["processTime"];
+			
+			var btime = timecount;
+			var block = new EBNBlockArray(obj["comment"]);
+			block.addBlock(new Point(btime, btime + blocked), "#E82C0C");
+			btime += blocked;
+			block.addBlock(new Point(btime, btime + connect), "#E82C0C");
+			btime += connect;
+			block.addBlock(new Point(btime, btime + send), "#9FE8AB");
+			btime += send;
+			block.addBlock(new Point(btime, btime + wait), "#9FE8AB");
+			btime += wait;
+			block.addBlock(new Point(btime, btime + receive), "#9FE8AB");
+			btime += receive;
+			block.addBlock(new Point(btime, btime + processTime), "#AA50FF");
+			btime += processTime;
+			this.blockArrays.push(block);
+			
+			
+			this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
+
+			// calculate our range
+			if(this.xRange.x > timecount)	this.xRange.x = timecount;
+			if(this.xRange.y < btime)		this.xRange.x = btime;
+		}
+	}
+}
 
 class EBNPageStats
 {
