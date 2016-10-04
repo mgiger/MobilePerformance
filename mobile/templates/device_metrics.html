@@ -1,0 +1,14 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<body style="background-color:#FFF3D3">
+	
+	{% load tz %}
+	
+	<h1>{{ device.name }}</h1>
+
+	<h2>Test Runs</h2>
+	{% for run in runs %}
+	<p><a href="/device/{{ device.name }}/{{ run.test_id }}/">{{ run.time|timezone:'America/Los_Angeles' }}</a></p>
+	{% endfor %}
+</body>
+</html>

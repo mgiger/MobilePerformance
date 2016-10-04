@@ -1,0 +1,13 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<body style="background-color:#FFF3D3">
+	
+	{% load tz %}
+	
+	<h1>Mobile Performance Metrics</h1>
+
+	{% for device in device_list %}
+	<p><a href="/device/{{device.name}}">{{ device.name }}</a> (updated: {{ device.last_update|timezone:'America/Los_Angeles' }})</p>
+	{% endfor %}
+</body>
+</html>

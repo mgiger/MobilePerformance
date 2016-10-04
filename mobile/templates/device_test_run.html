@@ -1,0 +1,43 @@
+{% extends "base_page.html" %}
+
+{% load tz %}
+
+{% block script %}
+	<script type="text/javascript">
+		$(function() {
+			
+			// parse the captured data
+			var jsonData = jQuery.parseJSON("{{ metrics.data | escapejs }}");
+			var dataset = new EBNPerformanceMetrics(jsonData);
+			var sysStats = dataset.systemStats;
+			var genStats = dataset.genericStats;
+			
+			// create a chart
+			var chart = new EBNChart("test");
+			
+			// thread load
+			var mainThreadLoad = new DatasetLineView(sysStats.timeMarks, sysStats.mainThreadLoad, { color:"blue", fillColor:"#D3D6FF" });
+			chart.addDatasetView(mainThreadLoad);
+			
+			// UI Blocks
+			var uiBlocks = new DatasetBlockView(dataset.genericStats);
+			chart.addDatasetView(uiBlocks);
+			
+			// frameRate
+			var frameRate = new DatasetLineView(sysStats.timeMarks, sysStats.frameRate, { color:"red" });
+			chart.addDatasetView(frameRate);
+			
+			chart.draw();
+			
+		});
+	  </script>
+{% endblock script %}
+
+{% block body %}
+<a href="/device/">Full Device List</a>&nbsp;&#124&nbsp;<a href="/device/{{ device.name }}/">{{ device.name }}</a>
+<br/>
+<p>Test run at {{ metrics.time|timezone:'America/Los_Angeles' }}</p>
+<p>Hardware: {{ hardware.modelName }} (iOS {{ hardware.systemVersion }}, {{ hardware.freeDiskSpace }} Free)</p>
+<hr/>
+<div id="test" style="width:100%; height:500px"></div>
+{% endblock body %}
