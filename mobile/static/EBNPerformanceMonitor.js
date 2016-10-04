@@ -460,14 +460,25 @@ class DatasetBlockView extends DatasetView
 		
 		ctx.font = "16px serif";
 	
+		var staggerCount = 0;
 		var ypos = this.viewFrame.y + this.blockTop;
 		var blocks = this.genericBlocks.blockArrays;
 		for(var i=0;i<blocks.length;++i)
 		{
-			if(i % this.blockStagger == 0)
-				ypos = this.viewFrame.y + this.blockTop;
-			else
-				ypos += this.blockHeight;
+			if(i > 0)
+			{
+				if(blocks[i-1].overlaps(blocks[i]))
+				{
+					++staggerCount;
+					ypos += this.blockHeight;
+				}
+				else
+				{
+					// reset 
+					staggerCount = 0;
+					ypos = this.viewFrame.y + this.blockTop;
+				}
+			}
 				
 			blocks[i].draw(ctx, this.chart, ypos, this.blockHeight);
 		}
@@ -499,6 +510,16 @@ class EBNChart
 		this.resizeHandler = this.resize.bind(this);
 		window.addEventListener("resize", this.resizeHandler, true);
 		this.resize();
+	}
+	
+	removeAllDatasetViews()
+	{
+		this.viewFrame = new Rect(0, 0, 0, 0);
+		this.drawScale = new Point(1, 1);
+		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
+		this.yRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
+		this.axes = new Axes();
+		this.datasetViews = [];
 	}
 	
 	addDatasetView(datasetView)

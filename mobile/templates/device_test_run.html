@@ -6,41 +6,52 @@
 	<script type="text/javascript">
 		$(function() {
 			
-			// parse the captured data
+			// create a chart
+			var chart = new EBNChart("chart");
+			
+			// parse the supplied data
 			var jsonData = jQuery.parseJSON("{{ metrics.data | escapejs }}");
 			var dataset = new EBNPerformanceMetrics(jsonData);
-			var sysStats = dataset.systemStats;
-			var genStats = dataset.genericStats;
 			
-			// create a chart
-			var chart = new EBNChart("test");
+			var populateChart = function(dset)
+			{
+				// thread load
+				var sysStats = dataset.systemStats;
+				var mainThreadLoad = new DatasetLineView(sysStats.timeMarks, sysStats.mainThreadLoad, { color:"blue", fillColor:"#D3D6FF" });
+				chart.addDatasetView(mainThreadLoad);
 			
-			// thread load
-			var mainThreadLoad = new DatasetLineView(sysStats.timeMarks, sysStats.mainThreadLoad, { color:"blue", fillColor:"#D3D6FF" });
-			chart.addDatasetView(mainThreadLoad);
+				// UI Blocks
+				var genStats = dataset.genericStats;
+				var uiBlocks = new DatasetBlockView(dataset.genericStats);
+				chart.addDatasetView(uiBlocks);
 			
-			// UI Blocks
-			var uiBlocks = new DatasetBlockView(dataset.genericStats);
-			chart.addDatasetView(uiBlocks);
+				var netBlocks = new DatasetBlockView(dataset.networkStats, { labels:false, blockHeight:10, blockTop:120, blockStagger:12 });
+				chart.addDatasetView(netBlocks);
 			
-			var netBlocks = new DatasetBlockView(dataset.networkStats, { labels:false, blockHeight:10, blockTop:100, blockStagger:8 });
-			chart.addDatasetView(netBlocks);
+				// frameRate
+				var frameRate = new DatasetLineView(sysStats.timeMarks, sysStats.frameRate, { color:"red" });
+				chart.addDatasetView(frameRate);
 			
-			// frameRate
-			var frameRate = new DatasetLineView(sysStats.timeMarks, sysStats.frameRate, { color:"red" });
-			chart.addDatasetView(frameRate);
+				chart.draw();
+			};
 			
-			chart.draw();
+			initializeDragAndDrop("#dropzone", function(fileContents) {
+				var jsonData = jQuery.parseJSON(fileContents);
+				var dset = new EBNPerformanceMetrics(jsonData);
+				chart.removeAllDatasetViews();
+				populateChart(dset);
+			});
 			
 		});
 	  </script>
 {% endblock script %}
 
 {% block body %}
+<div id="dropzone" style="visibility:hidden; opacity:0"></div>
 <a href="/device/">Full Device List</a>&nbsp;&#124&nbsp;<a href="/device/{{ device.name }}/">{{ device.name }}</a>
 <br/>
 <p>Test run at {{ metrics.time|timezone:'America/Los_Angeles' }}</p>
 <p>Hardware: {{ hardware.modelName }} (iOS {{ hardware.systemVersion }}, {{ hardware.freeDiskSpace }} Free)</p>
 <hr/>
-<div id="test" style="width:100%; height:500px"></div>
+<div id="chart" style="width:100%; height:500px"></div>
 {% endblock body %}
