@@ -9,31 +9,31 @@
 			// create a chart
 			var chart = new EBNChart("chart");
 			
-			// parse the supplied data
-			var jsonData = jQuery.parseJSON("{{ metrics.data | escapejs }}");
-			var dataset = new EBNPerformanceMetrics(jsonData);
-			
 			var populateChart = function(dset)
 			{
 				// thread load
-				var sysStats = dataset.systemStats;
-				var mainThreadLoad = new DatasetLineView(sysStats.timeMarks, sysStats.mainThreadLoad, { color:"blue", fillColor:"#D3D6FF" });
+				var mainThreadLoad = new DatasetLineView(dset.systemStats.timeMarks, dset.systemStats.mainThreadLoad, { color:"blue", fillColor:"#D3D6FF" });
 				chart.addDatasetView(mainThreadLoad);
 			
 				// UI Blocks
-				var genStats = dataset.genericStats;
-				var uiBlocks = new DatasetBlockView(dataset.genericStats);
+				var uiBlocks = new DatasetBlockView(dset.genericStats);
 				chart.addDatasetView(uiBlocks);
 			
-				var netBlocks = new DatasetBlockView(dataset.networkStats, { labels:false, blockHeight:10, blockTop:120, blockStagger:12 });
+				var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:10, blockTop:120, blockStagger:12 });
 				chart.addDatasetView(netBlocks);
 			
 				// frameRate
-				var frameRate = new DatasetLineView(sysStats.timeMarks, sysStats.frameRate, { color:"red" });
+				var frameRate = new DatasetLineView(dset.systemStats.timeMarks, dset.systemStats.frameRate, { color:"red" });
 				chart.addDatasetView(frameRate);
 			
 				chart.draw();
 			};
+			
+			
+			// parse the supplied data
+			var jsonData = jQuery.parseJSON("{{ metrics.data | escapejs }}");
+			var dataset = new EBNPerformanceMetrics(jsonData);
+			populateChart(dataset);
 			
 			initializeDragAndDrop("#dropzone", function(fileContents) {
 				var jsonData = jQuery.parseJSON(fileContents);
