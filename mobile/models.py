@@ -22,6 +22,8 @@ class Device(models.Model):
 		'iPhone6,2':'iPhone 5S (Global)',
 		'iPhone7,1':'iPhone 6 Plus',
 		'iPhone7,2':'iPhone 6',
+		'iPhone8,1':'iPhone 7 Plus',
+		'iPhone8,2':'iPhone 7',
 		'iPod1,1':'iPod Touch 1G',
 		'iPod2,1':'iPod Touch 2G',
 		'iPod3,1':'iPod Touch 3G',

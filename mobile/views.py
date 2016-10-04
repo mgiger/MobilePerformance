@@ -66,5 +66,5 @@ def device_test_run(request, device_name, test_id):
 	
 	data = json.loads(metrics.data)
 	hardwareData = data["log"]["hardware"]
-	hardwareData["modelName"] = Device.modelNames[data["log"]["hardware"]["deviceType"]]
+	hardwareData["modelName"] = Device.modelNames.get(data["log"]["hardware"]["deviceType"], "Unknown")
 	return render_to_response('device_test_run.html', context = { 'device':device, 'metrics': metrics, 'jsonData':data, 'hardware':hardwareData })

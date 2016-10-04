@@ -17,9 +17,9 @@ sudo apt-get -m update
 #sudo apt-get -y upgrade
 
 sudo apt-get -y install python-pip
-sudo pip install django
+sudo pip install django pytz
 
-sudo apt-get -y --no-upgrade install git zip unzip sqlite3 sysv-rc-conf
+sudo apt-get -y --no-upgrade install git zip unzip sqlite3 ntp sysv-rc-conf
 
 sudo apt-get -y --no-upgrade install nginx uwsgi uwsgi-plugin-python mysql-server mysql-client memcached
 sudo sysv-rc-conf nginx on
