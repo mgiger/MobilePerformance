@@ -58,8 +58,8 @@ thread=3
 master=1
 vhost=true
 plugin = python
-env = DJANGO_SETTINGS_MODULE=MobilePerformance.settings
-module = MobilePerformance.wsgi
+env = DJANGO_SETTINGS_MODULE=performance.settings
+module = performance.wsgi
 chdir = /usr/share/uwsgi/MobilePerformance
 socket = /run/uwsgi/app/MobilePerformance/socket
 logto = /var/log/uwsgi/MobilePerformance.log
