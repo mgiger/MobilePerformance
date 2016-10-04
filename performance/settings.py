@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'performance.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'performance',
+        'NAME': 'MobilePerformance',
         'USER': 'www-data',
         'PASSWORD': '',
         'HOST': 'localhost',   # Or an IP Address that your DB is hosted on

@@ -41,7 +41,7 @@ server {
 	listen		80;
 	server_name .django;
 	location /static  {
-      alias    /usr/share/uwsgi/MobilePerformance/static;
+      alias    /usr/share/uwsgi/MobilePerformance/mobile/static;
     }
 	location / {
 		uwsgi_pass unix:///run/uwsgi/app/MobilePerformance/socket;
