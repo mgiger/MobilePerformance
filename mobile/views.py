@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, render_to_response
 from django.views.decorators.csrf import csrf_exempt
 from models import PerformanceMetrics, Device
-import json, datetime
+import json, datetime, zlib, gzip, StringIO
 
 # Path to a file:
 # import performance.settings
@@ -15,7 +15,10 @@ def report_metrics(request):
 	response = HttpResponse("{success:false}", content_type='application/json')
 		
 	if request.method == 'POST':
-		data = json.loads(request.body)
+		payload = request.body
+		if request.META.get('HTTP_CONTENT_ENCODING', 'None') == 'gzip':
+			payload = zlib.decompress(payload, zlib.MAX_WBITS|32)
+		data = json.loads(payload)
 		device_name = data["log"]["hardware"]["deviceName"]
 		test_time = data["log"]["session"]["reportTime"]
 		
@@ -26,7 +29,7 @@ def report_metrics(request):
 		device.last_update = test_time
 		device.save()
 		
-		metric = PerformanceMetrics.objects.create(device=device, time=test_time, data=request.body)
+		metric = PerformanceMetrics.objects.create(device=device, time=test_time, data=payload)
 		metric.save()
 		
 		response = HttpResponse('{success:true}', content_type='application/json')
