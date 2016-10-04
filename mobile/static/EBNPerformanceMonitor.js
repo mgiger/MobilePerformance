@@ -437,7 +437,7 @@ class DatasetBlockView extends DatasetView
 		this.yRange = new Point(0, 1);
 		
 		this.labels = true;
-		this.blockTop = 50;
+		this.blockTop = 20;
 		this.blockHeight = 40;
 		this.blockStagger = 2;
 		
