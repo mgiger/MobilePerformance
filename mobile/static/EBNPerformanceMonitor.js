@@ -22,6 +22,12 @@ class Rect
 		this.width = width;
 		this.height = height;
 	}
+	
+	contains(point)
+	{
+		return	point.x >= this.x && point.x < this.x + this.width &&
+				point.y >= this.y && point.y < this.y + this.height;
+	}
 };
 
 class EBNSystemStats
@@ -57,6 +63,7 @@ class EBNBlockArray
 		this.blocks = [];
 		this.colors = [];
 		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
+		this.drawRect = null;
 	}
 	
 	addBlock(xrange, color)
@@ -71,6 +78,13 @@ class EBNBlockArray
 	overlaps(otherBlock)
 	{
 		return this.xRange.overlaps(otherBlock.xRange);
+	}
+	
+	containsCoordPoint(coordPoint)
+	{
+		if(this.drawRect)
+			return this.drawRect.contains(coordPoint);
+		return false;
 	}
 	
 	draw(ctx, chart, ypos, yheight)
@@ -93,7 +107,9 @@ class EBNBlockArray
 			ctx.strokeStyle = "#000";
 			ctx.strokeRect(coord0.x, ypos, (coord1.x - coord0.x), yheight);
 			xN = coord1.x;
-		}	
+		}
+		
+		this.drawRect = new Rect(x0, ypos, xN - x0, yheight);
 
 		// ID
 		if(this.name)
@@ -231,19 +247,8 @@ class EBNPerformanceMetrics
 	constructor(jsonData)
 	{
 		var log = jsonData["log"];
-			
 		this.appVersion = log["creator"] + " " + log["version"];
-
-		this.sessionStats = log["session"];
 		this.hardwareStats = log["hardware"];
-
-		this.firstTimestamp = this.sessionStats["coldLaunch"];
-		if(!this.firstTimestamp)
-			this.firstTimestamp = this.sessionStats["warmLaunch"];
-		this.lastTimestamp = this.sessionStats["resignActive"];
-		this.timeRange = [0, this.lastTimestamp - this.firstTimestamp];
-		
-		
 		this.systemStats = new EBNSystemStats(log["system"]);
 		this.networkStats = new EBNNetworkStats(log["entries"]);
 		this.pageStats = new EBNPageStats(log["pages"]);
@@ -333,8 +338,8 @@ class DatasetView
 		this.timeArray = timeArray;
 		this.dataArray = dataArray;
 		this.options = options;
-		this.drawScale = new Point(1, 1);
-		this.viewFrame = new Rect(10, 10, 0, 0);
+//		this.drawScale = new Point(1, 1);
+		this.viewFrame = new Rect(0, 0, 0, 0);
 		this.calculateRanges();
 	}
 	
@@ -363,21 +368,20 @@ class DatasetView
 		}
 	}
 	
-	dataToCoord(x, y)
-	{
-		return new Point(	this.viewFrame.x + (x - this.xRange.x) * this.drawScale.x,
-							this.viewFrame.height + this.viewFrame.y - ((y - this.yRange.x) * this.drawScale.y));
-	}
-	
 	resize(frame)
 	{
 		this.viewFrame = frame;
-		this.drawScale = new Point(	frame.width / (this.xRange.y - this.xRange.x),
-									frame.height / (this.yRange.y - this.yRange.x));
+		// this.drawScale = new Point(	frame.width / (this.xRange.y - this.xRange.x),
+		// 							frame.height / (this.yRange.y - this.yRange.x));
 	}
 	
 	draw(ctx)
 	{
+	}
+	
+	mouseOver(coordPoint, dataPoint)
+	{
+		
 	}
 }
 
@@ -394,11 +398,13 @@ class DatasetLineView extends DatasetView
 
 		// draw the data as a line
 		ctx.beginPath();
+		var startCoord;
 		for(var i=0;i<this.timeArray.length;++i)
 		{
 			var coord = this.chart.dataToCoord(this.timeArray[i], this.dataArray[i]);
 			if(i == 0)
 			{
+				startCoord = coord;
 				ctx.moveTo(coord.x, coord.y);
 			}
 			else
@@ -408,23 +414,24 @@ class DatasetLineView extends DatasetView
 			
 		}
 		
-		ctx.strokeStyle = (this.options.color == undefined) ? '#F00' : this.options.color;
+		ctx.strokeStyle = (this.options.color == undefined) ? '#000' : this.options.color;
 		ctx.lineWidth = 2;
 		ctx.shadowColor = '#999';
 		ctx.shadowBlur = 4;
 		ctx.shadowOffsetX = 2;
 		ctx.shadowOffsetY = 2;
 		
-		
 		if(this.options.fillColor != undefined)
 		{
 			ctx.stroke();
 		
-			ctx.lineTo(coord.x, this.viewFrame.y + this.viewFrame.height);
-			ctx.lineTo(this.viewFrame.x, this.viewFrame.y + this.viewFrame.height);
+			coord = this.chart.dataToCoord(this.xRange.y, this.yRange.x);
+			ctx.lineTo(coord.x, coord.y);
+			coord = this.chart.dataToCoord(this.xRange.x, this.yRange.x);
+			ctx.lineTo(coord.x, coord.y);
 			
 			ctx.closePath();
-			ctx.fillStyle=this.options.fillColor;
+			ctx.fillStyle = this.options.fillColor;
 			ctx.fill();
 		}
 		else
@@ -460,6 +467,19 @@ class DatasetBlockView extends DatasetView
 	
 	calculateRanges()
 	{
+	}
+	
+	mouseOver(coordPoint, dataPoint)
+	{
+		var blocks = this.genericBlocks.blockArrays;
+		for(var i=0;i<blocks.length;++i)
+		{
+			var block = blocks[i];
+			if(block.containsCoordPoint(coordPoint))
+			{
+			}
+		}
+		
 	}
 	
 	draw(ctx, chart)
@@ -526,6 +546,8 @@ class EBNChart
 		this.viewFrame = new Rect(0, 0, 0, 0);
 		
 		this.drawScale = new Point(1, 1);
+		this.zoomScale = new Point(1, 1);
+		this.panOffset = new Point(0, 0);
 		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		this.yRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		this.axes = new Axes();
@@ -536,12 +558,33 @@ class EBNChart
 		this.resizeHandler = this.resize.bind(this);
 		window.addEventListener("resize", this.resizeHandler, true);
 		this.resize();
+		
+		
+		// panning & zooming
+		this.mouseDownHandler = this.mouseDown.bind(this);
+		this.canvas.addEventListener('mousedown', this.mouseDownHandler, false);
+		this.mouseMoveHandler = this.mouseMove.bind(this);
+		this.canvas.addEventListener('mousemove', this.mouseMoveHandler, false);
+		this.mouseUpHandler = this.mouseUp.bind(this);
+		this.canvas.addEventListener('mouseup', this.mouseUpHandler, false);
+		this.canvas.addEventListener('mouseout', this.mouseUpHandler, false);
+		this.scrollHandler = this.handleScroll.bind(this);
+		this.canvas.addEventListener('DOMMouseScroll', this.scrollHandler, false);
+		this.canvas.addEventListener('mousewheel', this.scrollHandler, false);
+		
+		this.lastX = this.canvas.width/2
+		this.lastY = this.canvas.height/2;
+		this.dragStart = null;
+		this.dragged = false;
+		this.scaleFactor = 1.0;
 	}
 	
 	removeAllDatasetViews()
 	{
 		this.viewFrame = new Rect(0, 0, 0, 0);
 		this.drawScale = new Point(1, 1);
+		this.zoomScale = new Point(1, 1);
+		this.panOffset = new Point(0, 0);
 		this.xRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		this.yRange = new Point(Number.MAX_VALUE, Number.MIN_VALUE);
 		this.axes = new Axes();
@@ -558,10 +601,16 @@ class EBNChart
 		this.axes.resize(this);
 	}
 	
-	dataToCoord(x, y)
+	dataToCoord(dx, dy)
 	{
-		return new Point(	this.viewFrame.x + (x - this.xRange.x) * this.drawScale.x,
-							this.viewFrame.height + this.viewFrame.y - ((y - this.yRange.x) * this.drawScale.y));
+		return new Point(	this.panOffset.x + this.viewFrame.x + (dx - this.xRange.x) * this.drawScale.x * this.zoomScale.x,
+							this.panOffset.y + this.viewFrame.height + this.viewFrame.y - ((dy - this.yRange.x) * this.drawScale.y * this.zoomScale.y));
+	}
+	
+	coordToData(cx, cy)
+	{
+		return new Point(	(cx - this.panOffset.x - this.viewFrame.x) / (this.drawScale.x * this.zoomScale.x) + this.xRange.x,
+							-this.yRange.x - (cy - this.panOffset.y - this.viewFrame.height - this.viewFrame.y) / (this.drawScale.y * this.zoomScale.y));
 	}
 	
 	resize()
@@ -570,6 +619,9 @@ class EBNChart
 		this.canvas.width = this.container.clientWidth;
 		this.canvas.height = this.container.clientHeight;
 		
+		this.lastX = this.canvas.width/2
+		this.lastY = this.canvas.height/2;
+		
 		this.viewFrame = new Rect(20, 20, this.canvas.width - 50, this.canvas.height - 50);
 		this.recalculateRanges();
 		
@@ -577,6 +629,59 @@ class EBNChart
 		
 		this.draw();
 	}
+	
+	mouseDown(evt)
+	{
+		this.dragging = true;
+		this.dragStartPoint = new Point(evt.offsetX - this.panOffset.x, evt.offsetY - this.panOffset.y);
+	}
+	
+	mouseMove(evt)
+	{
+		if(this.dragging)
+		{
+			this.panOffset.x = evt.offsetX - this.dragStartPoint.x;
+			this.pinOffsets();
+			this.draw();
+		}
+		else
+		{
+			var coordPoint = new Point(evt.offsetX, evt.offsetY);
+			var dataPoint = this.coordToData(evt.offsetX, evt.offsetY)
+			for(var i=0;i<this.datasetViews.length;++i)
+			{
+				if(this.datasetViews[i].mouseOver(coordPoint, dataPoint))
+					break;
+			}
+		}
+	}
+	
+	mouseUp(evt)
+	{
+		this.dragging = false;
+	}
+	
+	handleScroll(evt)
+	{
+		var delta = evt.wheelDelta ? evt.wheelDelta/40 : evt.detail ? -evt.detail : 0;
+		if (delta)
+		{
+			this.zoomScale.x = Math.max(1.0, this.zoomScale.x - delta);
+			this.pinOffsets();
+			this.draw();
+		}
+		return evt.preventDefault() && false;
+	}
+	
+	pinOffsets()
+	{
+		// make sure we still have some data in range
+		if(this.panOffset.x > 0)
+			this.panOffset.x = 0;
+		else if(this.panOffset.x + (this.xRange.y - this.xRange.x) * this.drawScale.x * this.zoomScale.x < this.viewFrame.width)
+			this.panOffset.x = this.viewFrame.width - ((this.xRange.y - this.xRange.x) * this.drawScale.x * this.zoomScale.x);
+	}
+	
 	
 	recalculateRanges()
 	{
@@ -598,8 +703,14 @@ class EBNChart
 									this.viewFrame.height / (this.yRange.y - this.yRange.x));
 	}
 	
-	drawFrame(ctx)
+	draw()
 	{
+		var ctx = this.context;
+	
+		// clear the canvas
+		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+		// draw the frame
 		ctx.save();
 		ctx.strokeStyle = "#000"
 		ctx.lineWidth = 2;
@@ -609,19 +720,14 @@ class EBNChart
 		ctx.shadowOffsetY = 1;
 		ctx.strokeRect(this.viewFrame.x, this.viewFrame.y, this.viewFrame.width, this.viewFrame.height);
 		ctx.restore();
-	}
-	
-	draw()
-	{
-		var ctx = this.context;
-	
-		// clear the canvas
-		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-		// draw the frame
-		this.drawFrame(ctx);
 		
 		this.axes.draw(ctx, this);
+		
+		// clip to the inner parts of the viewRect
+		ctx.save();
+		ctx.rect(this.viewFrame.x, this.viewFrame.y, this.viewFrame.width, this.viewFrame.height);
+		ctx.stroke();
+		ctx.clip();
 		
 		// draw subviews
 		for(var i=0;i<this.datasetViews.length;++i)
@@ -630,6 +736,8 @@ class EBNChart
 			this.datasetViews[i].draw(ctx);
 			ctx.restore();
 		}
+		
+		ctx.restore();
 	}
 }
 
