@@ -16,15 +16,18 @@
 				chart.addDatasetView(mainThreadLoad);
 			
 				// UI Blocks
-				var uiBlocks = new DatasetBlockView(dset.genericStats);
+				var uiBlocks = new DatasetBlockView(dset.appSpeedStats);
 				chart.addDatasetView(uiBlocks);
 			
-				var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:16, blockTop:200, blockStagger:true });
-				chart.addDatasetView(netBlocks);
+				// var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:16, blockTop:200, blockStagger:true });
+				// chart.addDatasetView(netBlocks);
 			
 				// frameRate
 				var frameRate = new DatasetLineView(dset.systemStats.timeMarks, dset.systemStats.frameRate, { color:"red" });
 				chart.addDatasetView(frameRate);
+				
+				var subviewCount = new DatasetLineView(dset.systemStats.timeMarks, dset.systemStats.subviewCount, { color:"orange" });
+				chart.addDatasetView(subviewCount);
 			
 				chart.draw();
 			};
@@ -48,10 +51,12 @@
 
 {% block body %}
 <div id="dropzone" style="visibility:hidden; opacity:0"></div>
-<a href="/device/">Full Device List</a>&nbsp;&#124&nbsp;<a href="/device/{{ device.name }}/">{{ device.name }}</a>
+<a href="/device/">Full Device List</a>&nbsp;&#124&nbsp;
+<a href="/device/{{ device.name }}/">{{ device.name }}</a>&nbsp;&#124&nbsp;
+<a href="/test_run_data/{{device.name}}/{{metrics.test_id}}/">Raw Test Data</a>
 <br/>
 <p>Test run at {{ metrics.time|timezone:'America/Los_Angeles' }}</p>
 <p>Hardware: {{ hardware.modelName }} (iOS {{ hardware.systemVersion }}, {{ hardware.freeDiskSpace }} Free)</p>
 <hr/>
-<div id="chart" style="width:100%; height:800px"></div>
+<div id="chart" style="position:relative; width:100%; height:80vh"></div>
 {% endblock body %}

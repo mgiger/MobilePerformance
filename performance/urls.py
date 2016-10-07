@@ -19,6 +19,8 @@ import mobile.views
 urlpatterns = [
     url(r'^report_metrics', mobile.views.report_metrics),
 	
+	url(r'^test_run_data/(?P<device_name>.+)/(?P<test_id>\d+)/$', mobile.views.test_run_data),
+	
 	url(r'^device/(?P<device_name>.+)/(?P<test_id>\d+)/$', mobile.views.device_test_run),
 	url(r'^device/(?P<device_name>.+)/$', mobile.views.device),
 	url(r'^device/$', mobile.views.devices),

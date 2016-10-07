@@ -71,3 +71,18 @@ def device_test_run(request, device_name, test_id):
 	hardwareData = data["log"]["hardware"]
 	hardwareData["modelName"] = Device.modelNames.get(data["log"]["hardware"]["deviceType"], "Unknown")
 	return render_to_response('device_test_run.html', context = { 'device':device, 'metrics': metrics, 'jsonData':data, 'hardware':hardwareData })
+
+@csrf_exempt
+def test_run_data(request, device_name, test_id):
+	try:
+		device = Device.objects.get(pk=device_name)
+	except Device.DoesNotExist:  # catch the DoesNotExist error
+		return render_to_response('error.html')
+
+	try:
+		metrics = PerformanceMetrics.objects.get(pk=test_id)
+	except PerformanceMetrics.DoesNotExist:  # catch the DoesNotExist error
+		return render_to_response('error.html')
+
+	data = json.loads(metrics.data)
+	return HttpResponse(json.dumps(data, indent=4), content_type='application/json')
