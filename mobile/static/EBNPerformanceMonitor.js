@@ -178,9 +178,9 @@ class EBNNetworkStats
 			
 			var btime = timecount;
 			var block = new EBNBlockArray(obj["comment"]);
-			block.addBlock(new Point(btime, btime + blocked), "#EEE");
+			block.addBlock(new Point(btime, btime + blocked), "#98cff4");
 			btime += blocked;
-			block.addBlock(new Point(btime, btime + connect), "#EEE");
+			block.addBlock(new Point(btime, btime + connect), "#98cff4");
 			btime += connect;
 			block.addBlock(new Point(btime, btime + send), "#9FE8AB");
 			btime += send;
@@ -189,8 +189,6 @@ class EBNNetworkStats
 			block.addBlock(new Point(btime, btime + receive), "#9FE8AB");
 			btime += receive;
 			block.addBlock(new Point(btime, btime + processTime), "#AA50FF");
-			btime += processTime;
-			block.addBlock(new Point(timecount, btime + processTime), "#AA50FF");
 			this.blockArrays.push(block);
 			
 			// calculate our range

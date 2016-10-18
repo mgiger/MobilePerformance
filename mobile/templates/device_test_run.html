@@ -19,8 +19,8 @@
 				var uiBlocks = new DatasetBlockView(dset.appSpeedStats);
 				chart.addDatasetView(uiBlocks);
 			
-				// var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:16, blockTop:200, blockStagger:true });
-				// chart.addDatasetView(netBlocks);
+				var netBlocks = new DatasetBlockView(dset.networkStats, { labels:false, blockHeight:16, blockTop:200, blockStagger:true });
+				chart.addDatasetView(netBlocks);
 			
 				// frameRate
 				var frameRate = new DatasetLineView(dset.systemStats.timeMarks, dset.systemStats.frameRate, { color:"red" });
