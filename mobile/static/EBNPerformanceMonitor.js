@@ -87,10 +87,10 @@ class EBNBlockArray
 		{
 			var width = xN - x0;
 			var metrics = ctx.measureText(this.name);
-			if(metrics.width < width + 4)
+			if(metrics.width < width + 80)
 			{
 				ctx.fillStyle = "#000";
-				ctx.fillText(this.name, x0 + 4, ypos + yheight/2 + 4, width);	
+				ctx.fillText(this.name, x0 + 4, ypos + yheight/2 + 4, metrics.width);	
 			}
 		}
 	}

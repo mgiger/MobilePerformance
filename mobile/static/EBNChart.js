@@ -154,16 +154,14 @@ class EBNChart
 	
 	mouseUp(evt)
 	{
-		if(this.dragZoom)
+		if(this.dragZoom && this.crosshair.dragPoint)
 		{
-			var p0 = this.coordToData(this.crosshair.point.x, 0);
-			var p1 = this.coordToData(this.crosshair.dragPoint.x, 0);
-			var len = Math.abs(p0.x - p1.x);
-			this.zoomScale = new Point(len/this.viewFrame.width, 1);
-			console.log(this.zoomScale);
-			var dataPos = this.dataToCoord(p0);
-//			this.panOffset.x = dataPos.x;
-									
+			var x0 = this.coordToData(this.crosshair.point.x, 0).x;
+			var x1 = this.coordToData(this.crosshair.dragPoint.x, 0).x;
+			var minCoord = Math.min(x0, x1);
+			var maxCoord = Math.max(x0, x1);
+			this.zoomScale = new Point((this.xRange.y - this.xRange.x) / (maxCoord - minCoord), 1);
+			this.panOffset.x = - (minCoord - this.xRange.x) * (this.drawScale.x * this.zoomScale.x) - this.viewFrame.x;
 			this.crosshair.setDragPoint(null);
 			this.draw();
 		}
@@ -176,11 +174,17 @@ class EBNChart
 		var delta = evt.wheelDelta ? evt.wheelDelta/40 : evt.detail ? -evt.detail : 0;
 		if (delta)
 		{
+//			var midCoord = this.coordToData(this.viewFrame.width / 2, 0);
+			
 			this.zoomScale.x = Math.max(1.0, this.zoomScale.x - delta);
+
+//			var nPanOffset = this.dataToCoord(midCoord);
+//			console.log(minCoord0, minCoord1);
+//			this.panOffset.x = - (minCoord - this.xRange.x) * (this.drawScale.x * delta) - this.viewFrame.x;
+			
 			this.axes.resize(this);
 			this.pinOffsets();
 			this.draw();
-			console.log(this.zoomScale.x, this.panOffset.x);
 		}
 		return evt.preventDefault() && false;
 	}
@@ -602,16 +606,23 @@ class DatasetBlockView extends DatasetView
 							break;
 						}
 					}
-//					if(overlap)
-					{
-						ypos += this.blockHeight;
-					}
+					// if(overlap)
+					// {
+					// 	ypos += this.blockHeight;
+					// }
 					// else
 					// {
 					// 	// reset 
 					// 	startStagger = i;
 					// 	ypos = this.viewFrame.y + this.blockTop;
 					// }
+					
+					ypos += this.blockHeight;
+					if(ypos > this.viewFrame.y + this.viewFrame.height)
+					{
+						startStagger = i;
+					 	ypos = this.viewFrame.y + this.blockTop;
+					}
 				}
 			}
 			else
